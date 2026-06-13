@@ -524,6 +524,7 @@ function setTextMode(mode) {
   document.getElementById('church-name').style.color = mode === 'light' ? 'rgba(0,0,0,0.8)' : mainColor;
   document.getElementById('church-name').style.textShadow = mode === 'light' ? '0 0 8px rgba(255,255,255,0.9)' : 'none';
   document.getElementById('song-title-display').style.color = mode === 'light' ? 'rgba(0,0,0,0.6)' : mainColor;
+  syncOverlay();
   sendCastUpdate('update');
 }
 
@@ -534,6 +535,7 @@ document.getElementById('text-color-main').addEventListener('input', e => {
   document.getElementById('slide-label').style.color = col;
   document.getElementById('church-name').style.color = col;
   document.getElementById('song-title-display').style.color = col;
+  syncOverlay();
   sendCastUpdate('update');
 });
 document.getElementById('text-color-preview').addEventListener('input', e => {
