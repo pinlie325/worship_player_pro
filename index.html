@@ -1393,7 +1393,6 @@ function syncOverlay() {
 };
 
 // ── CAST / PROJECTION WINDOW ──
-let castChannel = null;
 let castWindow = null;
 
 function getCastState() {
@@ -1474,19 +1473,21 @@ function getCastState() {
 }
 
 function sendCastUpdate(type) {
-  if (!castChannel) return;
-  castChannel.postMessage({ type: type || 'update', state: getCastState() });
+  if (!castWindow || castWindow.closed) return;
+  try {
+    castWindow.postMessage({ type: type || 'update', state: getCastState() }, '*');
+  } catch(e) {}
 }
 
 // Listen for cast window ready signal and re-send state
 function initCastChannel() {
-  if (castChannel) castChannel.close();
-  castChannel = new BroadcastChannel('worship_cast_v1');
-  castChannel.onmessage = e => {
+  if (window._castMsgHandler) window.removeEventListener('message', window._castMsgHandler);
+  window._castMsgHandler = function(e) {
     if (e.data && e.data.type === 'ready') {
       setTimeout(() => sendCastUpdate('init'), 100);
     }
   };
+  window.addEventListener('message', window._castMsgHandler);
 }
 
 function toggleCastWindow() {
@@ -1494,7 +1495,7 @@ function toggleCastWindow() {
   if (castWindow && !castWindow.closed) {
     castWindow.close();
     castWindow = null;
-    if (castChannel) { castChannel.close(); castChannel = null; }
+    if (window._castMsgHandler) { window.removeEventListener('message', window._castMsgHandler); window._castMsgHandler = null; }
     btn.classList.remove('active');
     btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M2 12h4M2 16h2"/><circle cx="16" cy="13.5" r="2.5"/><path d="M16 11V7M2 3h20"/></svg> 📺 投放螢幕`;
     return;
@@ -1511,7 +1512,7 @@ function toggleCastWindow() {
   castWindow.document.write(getCastWindowHTML());
   castWindow.document.close();
 
-  // Set up BroadcastChannel
+  // Set up postMessage listener
   initCastChannel();
 
   // Send initial state after cast window loads
@@ -1522,7 +1523,7 @@ function toggleCastWindow() {
     if (castWindow && castWindow.closed) {
       clearInterval(watchClose);
       castWindow = null;
-      if (castChannel) { castChannel.close(); castChannel = null; }
+      if (window._castMsgHandler) { window.removeEventListener('message', window._castMsgHandler); window._castMsgHandler = null; }
       btn.classList.remove('active');
       btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M2 12h4M2 16h2"/><circle cx="16" cy="13.5" r="2.5"/><path d="M16 11V7M2 3h20"/></svg> 📺 投放螢幕`;
     }
@@ -1847,14 +1848,13 @@ if(state.videoSrc && shouldShowVideo){
   }
 }
 
-// ── BROADCAST CHANNEL ──
-const ch=new BroadcastChannel('worship_cast_v1');
-ch.onmessage=e=>{
-  if(e.data&&e.data.state)applyState(e.data.state);
-};
+// ── MESSAGE CHANNEL (postMessage, works across file:// origins) ──
+window.addEventListener('message', e => {
+  if(e.data && e.data.state) applyState(e.data.state);
+});
 
-// Signal ready
-ch.postMessage({type:'ready'});
+// Signal ready to parent
+if(window.opener) window.opener.postMessage({type:'ready'}, '*');
 
 // ── 全螢幕按鈕 ──
 const castFsBtn=document.getElementById('btn-cast-fs');
