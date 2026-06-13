@@ -248,7 +248,7 @@ Chorus
   <!-- HELP MODAL -->
   <div id="help-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
-      <button onclick="document.getElementById('help-modal').style.display='none'" style="position:absolute;top:14px;right:16px;background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      <button onclick="document.getElementById('help-modal').style.display='none'" style="position:sticky;top:0;float:right;margin:-4px -8px 0 0;background:var(--surface);border:none;color:var(--text-muted);font-size:20px;cursor:pointer;line-height:1;z-index:10;padding:2px 4px;border-radius:4px;">✕</button>
       <h2 style="font-family:'Noto Serif TC',serif;font-size:18px;font-weight:700;color:var(--accent2);margin-bottom:6px;">✦ 敬拜播放器 使用說明</h2>
       <div style="font-size:11px;color:var(--text-dim);margin-bottom:16px;letter-spacing:0.04em;">V1 &nbsp;·&nbsp; 2026.06.10</div>
       <div style="display:flex;flex-direction:column;gap:16px;font-size:13px;line-height:1.8;color:var(--text-muted);">
@@ -1072,8 +1072,9 @@ document.getElementById('file-input').addEventListener('change', e => {
     progressFill.style.width = '0%';
     timeCur.textContent = '0:00'; timeDur.textContent = '0:00';
 
-    // 偵測是否為本機 file:// 環境，直接提示
-    if (window.location.protocol === 'file:') {
+    // 偵測是否為本機 file:// 環境（排除 Electron），直接提示
+    const isElectron = navigator.userAgent.includes('Electron');
+    if (window.location.protocol === 'file:' && !isElectron) {
       ytFrame._ytErrShown = true;
       showYtError();
     } else {
