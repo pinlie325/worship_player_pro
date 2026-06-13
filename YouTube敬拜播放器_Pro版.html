@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube 敬拜播放器 Pro</title>
+<style>
+body{background:#111;color:#fff;font-family:Segoe UI,sans-serif;max-width:1000px;margin:auto;padding:20px}
+h1{text-align:center;color:#ff4d4d}
+.row{display:flex;gap:8px}
+input{flex:1;padding:12px;background:#222;color:#fff;border:1px solid #444;border-radius:8px}
+button{padding:12px;border:none;border-radius:8px;cursor:pointer}
+.red{background:#ff4d4d;color:#fff}
+.gray{background:#333;color:#fff}
+#player{margin-top:20px;aspect-ratio:16/9;width:100%;border:none;border-radius:12px}
+.item{padding:10px;margin:6px 0;background:#1c1c1c;border-radius:8px;cursor:pointer}
+.item.active{border:1px solid #ff4d4d}
+</style>
+</head>
+<body>
+<h1>▶ YouTube 敬拜播放器 Pro</h1>
+
+<div class="row">
+<input id="url" placeholder="貼上 YouTube 網址、播放清單或影片ID">
+<button class="gray" onclick="add()">加入</button>
+<button class="red" onclick="playInput()">播放</button>
+</div>
+
+<div style="margin-top:10px">
+<button class="gray" onclick="prev()">上一首</button>
+<button class="gray" onclick="next()">下一首</button>
+<label><input type="checkbox" id="loop">循環</label>
+</div>
+
+<iframe id="player"
+allow="autoplay; encrypted-media"
+allowfullscreen></iframe>
+
+<div id="list"></div>
+
+<script>
+let items=JSON.parse(localStorage.getItem("ytpro")||"[]");
+let current=-1;
+
+function getId(u){
+ try{
+   if(/^[A-Za-z0-9_-]{11}$/.test(u.trim())) return u.trim();
+   let m=u.match(/[?&]v=([A-Za-z0-9_-]{11})/);
+   if(m) return m[1];
+   m=u.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
+   if(m) return m[1];
+   m=u.match(/embed\/([A-Za-z0-9_-]{11})/);
+   if(m) return m[1];
+ }catch(e){}
+ return null;
+}
+
+function play(id,index=-1){
+ current=index;
+ document.getElementById("player").src=
+ "https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0";
+ render();
+}
+
+function playInput(){
+ const id=getId(document.getElementById("url").value);
+ if(!id){alert("無法辨識影片");return;}
+ play(id);
+}
+
+function add(){
+ const txt=document.getElementById("url").value;
+ const id=getId(txt);
+ if(!id){alert("無法辨識影片");return;}
+ items.push({id:id,url:txt});
+ localStorage.setItem("ytpro",JSON.stringify(items));
+ render();
+}
+
+function render(){
+ let h="";
+ items.forEach((v,i)=>{
+   h+=`<div class="item ${i===current?'active':''}" onclick="play('${v.id}',${i})">${v.url}</div>`;
+ });
+ document.getElementById("list").innerHTML=h;
+}
+
+function next(){
+ if(items.length===0)return;
+ current++;
+ if(current>=items.length){
+   if(document.getElementById("loop").checked) current=0;
+   else return;
+ }
+ play(items[current].id,current);
+}
+
+function prev(){
+ if(items.length===0)return;
+ current--;
+ if(current<0) current=items.length-1;
+ play(items[current].id,current);
+}
+
+render();
+</script>
+</body>
+</html>
