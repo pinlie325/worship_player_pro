@@ -1468,7 +1468,8 @@ function getCastState() {
     videoCurrentTime: player.currentTime || 0,
     videoPaused: player.paused,
     expanded: (typeof expanded!=='undefined'?expanded:false),
-    videoVisible: (typeof videoVisible!=='undefined'?videoVisible:true)
+    videoVisible: (typeof videoVisible!=='undefined'?videoVisible:true),
+    ytVideoId: (function(){ const f=document.getElementById('yt-frame'); if(f&&f.style.display!=='none'&&f.src){ const m=f.src.match(/embed\/([A-Za-z0-9_-]{11})/); return m?m[1]:''; } return ''; })()
   };
 }
 
@@ -1604,6 +1605,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a12;color:var(--
 <canvas id="particle-canvas"></canvas>
 <div id="bg-overlay"></div>
 <video id="cast-video" autoplay muted playsinline style="position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:1;display:none;"></video>
+<iframe id="cast-yt-frame" allow="autoplay; encrypted-media" allowfullscreen style="position:fixed;inset:0;width:100%;height:100%;border:none;z-index:1;display:none;background:#000;"></iframe>
 
 <!-- 全螢幕播放按鈕 -->
 <button id="btn-cast-fs" title="全螢幕播放">
@@ -1731,8 +1733,22 @@ function applyState(state){
 
   
 const castVideo=document.getElementById('cast-video');
+const castYtFrame=document.getElementById('cast-yt-frame');
 const shouldShowVideo = state.overlayMode || (!state.expanded && state.videoVisible!==false);
-if(state.videoSrc && shouldShowVideo){
+if(state.ytVideoId && shouldShowVideo){
+  // YouTube mode
+  castVideo.style.display='none';
+  const wantSrc='https://www.youtube-nocookie.com/embed/'+state.ytVideoId+'?autoplay=1&mute=1&rel=0&controls=0';
+  if(castYtFrame.getAttribute('data-ytid')!==state.ytVideoId){
+    castYtFrame.src=wantSrc;
+    castYtFrame.setAttribute('data-ytid',state.ytVideoId);
+  }
+  castYtFrame.style.display='block';
+}else if(state.videoSrc && shouldShowVideo){
+  // Local video mode
+  castYtFrame.style.display='none';
+  castYtFrame.src='';
+  castYtFrame.removeAttribute('data-ytid');
   castVideo.style.display='block';
   if(castVideo.src!==state.videoSrc){ castVideo.src=state.videoSrc; }
   try{
@@ -1743,6 +1759,7 @@ if(state.videoSrc && shouldShowVideo){
   if(state.videoPaused){ castVideo.pause(); } else { castVideo.play().catch(()=>{}); }
 }else{
   castVideo.style.display='none';
+  castYtFrame.style.display='none';
 }
 
   const hasSlides=state.hasSlides;
