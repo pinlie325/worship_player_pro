@@ -249,7 +249,7 @@ Chorus
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
       <button onclick="document.getElementById('help-modal').style.display='none'" style="position:sticky;top:0;float:right;margin:-4px -8px 0 0;background:var(--surface);border:none;color:var(--text-muted);font-size:20px;cursor:pointer;line-height:1;z-index:10;padding:2px 4px;border-radius:4px;">✕</button>
       <h2 style="font-family:'Noto Serif TC',serif;font-size:18px;font-weight:700;color:var(--accent2);margin-bottom:6px;">✦ 敬拜播放器 使用說明</h2>
-      <div style="font-size:11px;color:var(--text-dim);margin-bottom:16px;letter-spacing:0.04em;">V2 &nbsp;·&nbsp; 2026.06.14</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:16px;letter-spacing:0.04em;">V2  ·  2026.06.14</div>
       <div style="display:flex;flex-direction:column;gap:16px;font-size:13px;line-height:1.8;color:var(--text-muted);">
         <div><div style="font-weight:500;color:var(--text);margin-bottom:4px;">✏️ 編輯歌詞</div>
           點「✏️ 編輯歌詞」開啟編輯區，每行一句歌詞，每次顯示兩行。<br>
@@ -1025,9 +1025,14 @@ document.getElementById('file-input').addEventListener('change', e => {
   timeCur.textContent = '0:00'; timeDur.textContent = '0:00';
   btnPlay.disabled = true;
   iconPlay.style.display = ''; iconPause.style.display = 'none';
-  // hide yt-frame if showing
+  // 停用 YouTube：隱藏 iframe、收起輸入框、重置按鈕
   const ytFrame = document.getElementById('yt-frame');
   if (ytFrame) { ytFrame.style.display = 'none'; ytFrame.src = ''; }
+  const ytWrap = document.getElementById('yt-input-wrap');
+  if (ytWrap) ytWrap.classList.remove('open');
+  const ytToggle = document.getElementById('yt-toggle-btn');
+  if (ytToggle) { ytToggle.style.borderColor = ''; ytToggle.style.color = ''; }
+  document.getElementById('yt-input').value = '';
 });
 
 // ── YOUTUBE 切換輸入框 ──
@@ -1074,9 +1079,11 @@ function toggleYtInput() {
     const videoPlayer = document.getElementById('player');
     const noVideo = document.getElementById('no-video');
 
-    // hide local video, show iframe
+    // 停用本地影片
     videoPlayer.pause();
+    videoPlayer.src = '';
     videoPlayer.style.display = 'none';
+    document.getElementById('file-input').value = '';
     noVideo.style.display = 'none';
     ytFrame.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&enablejsapi=1';
     ytFrame.style.display = 'block';
